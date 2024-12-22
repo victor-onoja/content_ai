@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "937244764980",
+    "project_id": "coco-contentstrategist-ai",
+    "storage_bucket": "coco-contentstrategist-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:937244764980:android:aa237c7a2965c03b52d361",
+        "android_client_info": {
+          "package_name": "com.example.content_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFCnxSdbpaOzGZrw8Nu11jRp01aSTO2TQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
