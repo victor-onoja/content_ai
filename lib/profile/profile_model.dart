@@ -70,20 +70,30 @@ class Profile {
         'uniqueSellingProposition': uniqueSellingProposition,
       };
 
-  factory Profile.fromJson(Map<String, dynamic> json) => Profile(
-        id: json['id'],
-        name: json['name'],
-        industry: json['industry'],
-        brandPersonality: json['brandPersonality'],
-        targetPlatforms: List<String>.from(json['targetPlatforms']),
-        contentGoals: List<String>.from(json['contentGoals']),
-        contentTypes: List<String>.from(json['contentTypes']),
-        toneOfVoice: json['toneOfVoice'],
-        targetAudience: List<String>.from(json['targetAudience']),
-        postingFrequency:
-            Map<String, PostingFrequency>.from(json['postingFrequency']),
-        uniqueSellingProposition: json['uniqueSellingProposition'],
-      );
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    Map<String, PostingFrequency> postingFrequencyMap = {};
+    if (json['postingFrequency'] != null) {
+      (json['postingFrequency'] as Map<String, dynamic>).forEach((key, value) {
+        postingFrequencyMap[key] =
+            PostingFrequency.fromJson(value as Map<String, dynamic>);
+      });
+    }
+
+    return Profile(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      industry: json['industry'] as String? ?? '',
+      brandPersonality: json['brandPersonality'] as String? ?? '',
+      targetPlatforms: List<String>.from(json['targetPlatforms'] ?? []),
+      contentGoals: List<String>.from(json['contentGoals'] ?? []),
+      contentTypes: List<String>.from(json['contentTypes'] ?? []),
+      toneOfVoice: json['toneOfVoice'] as String? ?? '',
+      targetAudience: List<String>.from(json['targetAudience'] ?? []),
+      postingFrequency: postingFrequencyMap,
+      uniqueSellingProposition:
+          json['uniqueSellingProposition'] as String? ?? '',
+    );
+  }
 }
 
 class PostingFrequency {
@@ -103,10 +113,11 @@ class PostingFrequency {
         'preferredTimeRange': preferredTimeRange,
       };
 
-  factory PostingFrequency.fromJson(Map<String, dynamic> json) =>
-      PostingFrequency(
-        postsPerWeek: json['postsPerWeek'],
-        preferredDays: List<String>.from(json['preferredDays']),
-        preferredTimeRange: json['preferredTimeRange'],
-      );
+  factory PostingFrequency.fromJson(Map<String, dynamic> json) {
+    return PostingFrequency(
+      postsPerWeek: json['postsPerWeek'] as int,
+      preferredDays: List<String>.from(json['preferredDays'] as List),
+      preferredTimeRange: json['preferredTimeRange'] as String,
+    );
+  }
 }

@@ -13,3 +13,5 @@ class CreateProfile extends ProfileEvent {
   @override
   List<Object?> get props => [profile];
 }
+
+class LoadProfile extends ProfileEvent {}

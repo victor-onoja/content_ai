@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../home/home_screen.dart';
 import 'profile_bloc.dart';
 import 'profile_event.dart';
 import 'profile_model.dart';
+import 'profile_state.dart';
 
 class ProfileCreationScreen extends StatefulWidget {
   const ProfileCreationScreen({super.key});
@@ -64,99 +66,146 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.yellow.shade100,
-              Colors.orange.shade50,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Let's Create Your Profile! 🌟",
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Colors.orange.shade800,
-                          fontWeight: FontWeight.bold,
-                        ),
+    return BlocListener<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        if (state.status == ProfileStatus.failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.error ?? 'Failed to create profile'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else if (state.status == ProfileStatus.success) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => const HomeScreen(),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        body: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            return Stack(children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.yellow.shade100,
+                      Colors.orange.shade50,
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  _buildTextField(
-                    'Brand/Profile Name',
-                    'name',
-                    'Give your profile a name',
-                  ),
-                  _buildTextField(
-                    'Industry',
-                    'industry',
-                    'E.g., Technology, Fashion, Food',
-                  ),
-                  _buildTextField(
-                    'Brand Personality',
-                    'brandPersonality',
-                    'E.g., Playful, Professional, Innovative',
-                  ),
-                  _buildMultiSelect(
-                    'Target Platforms',
-                    'targetPlatforms',
-                    _platforms,
-                  ),
-                  _buildMultiSelect(
-                    'Content Types',
-                    'contentTypes',
-                    _contentTypes,
-                  ),
-                  _buildTextField(
-                    'Tone of Voice',
-                    'toneOfVoice',
-                    'E.g., Casual, Formal, Humorous',
-                  ),
-                  _buildTargetAudienceField(),
-                  _buildPostingFrequencySection(),
-                  _buildTextField(
-                    'Unique Selling Proposition',
-                    'uniqueSellingProposition',
-                    'What makes your brand special?',
-                  ),
-                  _buildContentGoalsSection(),
-                  const SizedBox(height: 32),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange.shade400,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 48,
-                          vertical: 16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        'Create Profile',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
+                ),
+                child: SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Let's Create Your Profile! 🌟",
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  color: Colors.orange.shade800,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 20),
+                          _buildTextField(
+                            'Brand/Profile Name',
+                            'name',
+                            'Give your profile a name',
+                          ),
+                          _buildTextField(
+                            'Industry',
+                            'industry',
+                            'E.g., Technology, Fashion, Food',
+                          ),
+                          _buildTextField(
+                            'Brand Personality',
+                            'brandPersonality',
+                            'E.g., Playful, Professional, Innovative',
+                          ),
+                          _buildMultiSelect(
+                            'Target Platforms',
+                            'targetPlatforms',
+                            _platforms,
+                          ),
+                          _buildMultiSelect(
+                            'Content Types',
+                            'contentTypes',
+                            _contentTypes,
+                          ),
+                          _buildTextField(
+                            'Tone of Voice',
+                            'toneOfVoice',
+                            'E.g., Casual, Formal, Humorous',
+                          ),
+                          _buildTargetAudienceField(),
+                          _buildPostingFrequencySection(),
+                          _buildTextField(
+                            'Unique Selling Proposition',
+                            'uniqueSellingProposition',
+                            'What makes your brand special?',
+                          ),
+                          _buildContentGoalsSection(),
+                          const SizedBox(height: 32),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: state.status == ProfileStatus.loading
+                                  ? null
+                                  : _submitForm,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange.shade400,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 48,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                              ),
+                              child: state.status == ProfileStatus.loading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Create Profile',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+              if (state.status == ProfileStatus.loading)
+                Container(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+            ]);
+          },
         ),
       ),
     );
@@ -173,7 +222,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           filled: true,
-          fillColor: Colors.white.withOpacity(0.9),
+          fillColor: Colors.white.withValues(alpha: 0.9),
         ),
         validator: (value) {
           if (value?.isEmpty ?? true) {
@@ -390,7 +439,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.orange.shade200),
             ),
@@ -455,7 +504,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.9),
+              fillColor: Colors.white.withValues(alpha: 0.9),
             ),
             onFieldSubmitted: (value) {
               if (value.isNotEmpty) {

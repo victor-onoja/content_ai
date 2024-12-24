@@ -6,7 +6,6 @@
 .DS_Store
 .atom/
 .build/
-.lib/firebase_options.dart
 .buildlog/
 .history
 .svn/
