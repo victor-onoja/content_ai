@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: Colors.red.shade400,
               ),
             );
-            print('error: ${state.error}');
           },
         ),
         BlocListener<ProfileBloc, ProfileState>(
@@ -52,12 +51,12 @@ class _HomeScreenState extends State<HomeScreen> {
               previous.profile != current.profile && current.profile != null,
           listener: (context, state) {
             // Regenerate suggestions when profile changes
-            context.read<CalendarBloc>().add(
-                  RegenerateContentSuggestions(
-                    DateTime.now(),
-                    DateTime.now().add(const Duration(days: 14)),
-                  ),
-                );
+            // context.read<CalendarBloc>().add(
+            //       RegenerateContentSuggestions(
+            //         DateTime.now(),
+            //         DateTime.now().add(const Duration(days: 14)),
+            //       ),
+            //     );
           },
         ),
       ],

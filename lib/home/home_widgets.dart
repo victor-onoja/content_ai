@@ -118,7 +118,6 @@ class ContentSuggestionCard extends StatelessWidget {
   }
 
   IconData _getPlatformIcon() {
-    print(suggestion.platform);
     switch (suggestion.platform.toLowerCase()) {
       case 'instagram':
         return Icons.camera_alt;

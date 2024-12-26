@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:math'; // Add this import
 
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../profile/profile_bloc.dart';
+import '../profile/profile_event.dart';
 import '../profile/profile_state.dart';
 import 'calendar_event.dart';
 import 'calendar_state.dart';
@@ -84,7 +87,6 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         suggestions: suggestions,
       ));
     } catch (e) {
-      print('Calendar load error: $e');
       emit(state.copyWith(
         status: CalendarStatus.failure,
         error: e.toString(),
@@ -238,31 +240,42 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     Brand Details:
     - Industry: ${profile.industry}
     - Brand Personality: ${profile.brandPersonality}
-    - Tone of Voice: ${profile.toneOfVoice}
     - Unique Selling Proposition: ${profile.uniqueSellingProposition}
-    
-    Target Audience: ${profile.targetAudience.join(', ')}
-    Primary Goals: ${profile.contentGoals.join(', ')}
+    - Target Audience: ${profile.targetAudience.join(', ')}
+    - Primary Goals: ${profile.contentGoals.join(', ')}
+    - Platforms: ${profile.targetPlatforms.join(', ')}
+    - Content Types: ${profile.contentTypes.join(', ')}
     
     For each platform (${profile.targetPlatforms.join(', ')}), generate content suggestions that:
     1. Match the specified content types: ${profile.contentTypes.join(', ')}
-    2. Align with posting frequencies:
-    ${profile.postingFrequency.entries.map((e) => '   - ${e.key}: ${e.value.postsPerWeek} posts/week').join('\n')}
-    
-    Please provide content suggestions for the next 14 days in this format:
-    Platform: [platform name]
-    Day [number]: [content type]: [description]
+    2. Align with the brand personality: ${profile.brandPersonality} and unique selling proposition: ${profile.uniqueSellingProposition}
+    3. Target the specified audience: ${profile.targetAudience.join(', ')}
     
     Ensure each suggestion includes:
-    - The platform
-    - The day number (1-14)
+    - The platform (must specify one of ${profile.targetPlatforms.join(', ')})
+    - The day number (1-7)
     - Content type
     - Brief but specific description
+
+    Platform-specific posting guidelines:
+    - Facebook: 1 post/day, optimal times 9-11 AM or 1-3 PM weekdays, focus on Thursdays/Fridays
+    - Instagram: 1-2 posts/day, optimal at 11 AM-1 PM or 7-9 PM weekdays, prioritize Wednesdays
+    - X: 2-5 posts/day, best at 10-11 AM or 6-7 PM weekdays, focus on Wed/Thu
+    - LinkedIn: 3-5 posts/week, optimal 10-11 AM or 12-1 PM Tue/Wed/Thu, prioritize Tuesdays
+    - TikTok: 1-4 posts/day, best 8-11 PM, prioritize weekend evenings
+
+    Please provide content suggestions for the next 7 days in this format:
+    Platform: [platform name]
+    Day [number]: [content type]: [description]
+
+    Create an engaging mix of content types and times that maintains consistent brand presence while respecting platform-specific best practices.
+    Don't use hashtags
+    Always ensure you specify the platform name and day number for each suggestion.
+    
     ''';
 
       final content = [Content.text(prompt)];
       final response = await _generativeModel.generateContent(content);
-      print('Raw AI Response: ${response.text}');
       if (response.text == null || response.text!.isEmpty) {
         throw Exception('Empty response from AI model');
       }
@@ -308,8 +321,9 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         status: CalendarStatus.success,
         suggestions: updatedSuggestions,
       ));
+      // load profile
+      _profileBloc.add(LoadProfile());
     } catch (e) {
-      print('Error generating suggestions: $e');
       emit(state.copyWith(
         status: CalendarStatus.failure,
         error: e.toString(),
@@ -322,6 +336,41 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
     DateTime startDate,
   ) {
     final Map<DateTime, List<ContentSuggestion>> suggestions = {};
+    final random = Random(); // Initialize random
+
+    // Define platform-specific posting times
+    final Map<String, List<TimeOfDay>> postingTimes = {
+      'facebook': [
+        TimeOfDay(hour: 9, minute: 0),
+        TimeOfDay(hour: 11, minute: 0),
+        TimeOfDay(hour: 13, minute: 0),
+        TimeOfDay(hour: 15, minute: 0),
+      ],
+      'instagram': [
+        TimeOfDay(hour: 11, minute: 0),
+        TimeOfDay(hour: 13, minute: 0),
+        TimeOfDay(hour: 19, minute: 0),
+        TimeOfDay(hour: 21, minute: 0),
+      ],
+      'x': [
+        TimeOfDay(hour: 10, minute: 0),
+        TimeOfDay(hour: 11, minute: 0),
+        TimeOfDay(hour: 18, minute: 0),
+        TimeOfDay(hour: 19, minute: 0),
+      ],
+      'linkedin': [
+        TimeOfDay(hour: 10, minute: 0),
+        TimeOfDay(hour: 11, minute: 0),
+        TimeOfDay(hour: 12, minute: 0),
+        TimeOfDay(hour: 13, minute: 0),
+      ],
+      'tiktok': [
+        TimeOfDay(hour: 20, minute: 0),
+        TimeOfDay(hour: 21, minute: 0),
+        TimeOfDay(hour: 22, minute: 0),
+        TimeOfDay(hour: 23, minute: 0),
+      ],
+    };
 
     // Split response into lines and clean up
     final lines = responseText
@@ -329,6 +378,8 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
         .map((l) => l.trim())
         .where((l) => l.isNotEmpty)
         .toList();
+
+    // Add this line for debugging
 
     String currentPlatform = '';
     String? currentContentType;
@@ -343,6 +394,7 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       // Check for platform line
       if (line.contains('Platform:')) {
         currentPlatform = line.split('Platform:')[1].replaceAll('*', '').trim();
+        // Add this line for debugging
         continue;
       }
 
@@ -364,11 +416,25 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
             currentDescription = parts.sublist(1).join(':').trim();
 
             final date = startDate.add(Duration(days: dayNumber - 1));
+            final platformKey = currentPlatform.toLowerCase();
+            final times = postingTimes[platformKey] ??
+                [
+                  TimeOfDay(hour: 9, minute: 0),
+                  TimeOfDay(hour: 17, minute: 0),
+                ];
+            final randomTime = times[random.nextInt(times.length)];
+
             final suggestion = ContentSuggestion(
               platform: currentPlatform,
               contentType: currentContentType,
               description: currentDescription,
-              scheduledTime: date,
+              scheduledTime: DateTime(
+                date.year,
+                date.month,
+                date.day,
+                randomTime.hour,
+                randomTime.minute,
+              ),
               status: 'draft',
             );
 
@@ -376,17 +442,13 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
               suggestions[date] = [];
             }
             suggestions[date]!.add(suggestion);
-            print(
-                'Successfully parsed suggestion for $date: ${suggestion.toJson()}');
+            // Add this line for debugging
           }
         }
       }
     }
 
-    if (suggestions.isEmpty) {
-      print('Warning: No suggestions were parsed from the response');
-      print('Response text was: $responseText');
-    }
+    if (suggestions.isEmpty) {}
 
     return suggestions;
   }

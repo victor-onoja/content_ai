@@ -19,7 +19,6 @@ class AuthScreen extends StatelessWidget {
                 backgroundColor: Colors.orange,
               ),
             );
-            print(state.errorMessage);
           } else if (state.status == AuthStatus.authenticated) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const ProfileCreationScreen()),

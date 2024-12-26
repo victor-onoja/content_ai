@@ -39,9 +39,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         status: ProfileStatus.success,
         profile: event.profile,
       ));
-    } catch (e, stackTrace) {
-      print('Error creating profile: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
       emit(state.copyWith(
         status: ProfileStatus.failure,
         error: e.toString(),
@@ -73,7 +71,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         profile: profile,
       ));
     } catch (e) {
-      print('Error loading profile: $e');
       emit(state.copyWith(
         status: ProfileStatus.failure,
         error: e.toString(),

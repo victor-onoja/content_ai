@@ -29,7 +29,6 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
     'LinkedIn',
     'Facebook',
     'TikTok',
-    'YouTube',
   ];
 
   final List<String> _contentTypes = [
@@ -142,13 +141,13 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                             'contentTypes',
                             _contentTypes,
                           ),
-                          _buildTextField(
-                            'Tone of Voice',
-                            'toneOfVoice',
-                            'E.g., Casual, Formal, Humorous',
-                          ),
+                          // _buildTextField(
+                          //   'Tone of Voice',
+                          //   'toneOfVoice',
+                          //   'E.g., Casual, Formal, Humorous',
+                          // ),
                           _buildTargetAudienceField(),
-                          _buildPostingFrequencySection(),
+                          // _buildPostingFrequencySection(),
                           _buildTextField(
                             'Unique Selling Proposition',
                             'uniqueSellingProposition',
@@ -264,152 +263,6 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
               );
             }).toList(),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPostingFrequencySection() {
-    final weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final timeRanges = ['Morning', 'Afternoon', 'Evening'];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Posting Schedule',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.orange.shade800,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ..._formData['targetPlatforms']?.map<Widget>((platform) {
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          platform,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Posts per week slider
-                        Row(
-                          children: [
-                            const Text('Posts per week:'),
-                            Expanded(
-                              child: Slider(
-                                value: (_formData['postingSchedule']?[platform]
-                                            ?['postsPerWeek'] ??
-                                        3)
-                                    .toDouble(),
-                                min: 1,
-                                max: 14,
-                                divisions: 13,
-                                label:
-                                    '${(_formData['postingSchedule']?[platform]?['postsPerWeek'] ?? 3)}',
-                                onChanged: (value) {
-                                  setState(() {
-                                    if (_formData['postingSchedule'] == null) {
-                                      _formData['postingSchedule'] = {};
-                                    }
-                                    if (_formData['postingSchedule']
-                                            [platform] ==
-                                        null) {
-                                      _formData['postingSchedule']
-                                          [platform] = {};
-                                    }
-                                    _formData['postingSchedule'][platform]
-                                        ['postsPerWeek'] = value.round();
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        // Preferred days
-                        const Text('Preferred days:'),
-                        Wrap(
-                          spacing: 8,
-                          children: weekDays.map((day) {
-                            return FilterChip(
-                              label: Text(day),
-                              selected: (_formData['postingSchedule']?[platform]
-                                          ?['preferredDays'] ??
-                                      [])
-                                  .contains(day),
-                              onSelected: (selected) {
-                                setState(() {
-                                  if (_formData['postingSchedule'] == null) {
-                                    _formData['postingSchedule'] = {};
-                                  }
-                                  if (_formData['postingSchedule'][platform] ==
-                                      null) {
-                                    _formData['postingSchedule'][platform] = {};
-                                  }
-                                  if (_formData['postingSchedule'][platform]
-                                          ['preferredDays'] ==
-                                      null) {
-                                    _formData['postingSchedule'][platform]
-                                        ['preferredDays'] = [];
-                                  }
-
-                                  var days = _formData['postingSchedule']
-                                      [platform]['preferredDays'] as List;
-                                  if (selected) {
-                                    days.add(day);
-                                  } else {
-                                    days.remove(day);
-                                  }
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                        // Preferred time range
-                        const Text('Preferred time:'),
-                        Wrap(
-                          spacing: 8,
-                          children: timeRanges.map((time) {
-                            return ChoiceChip(
-                              label: Text(time),
-                              selected: (_formData['postingSchedule']?[platform]
-                                          ?['preferredTimeRange'] ??
-                                      '') ==
-                                  time,
-                              onSelected: (selected) {
-                                setState(() {
-                                  if (_formData['postingSchedule'] == null) {
-                                    _formData['postingSchedule'] = {};
-                                  }
-                                  if (_formData['postingSchedule'][platform] ==
-                                      null) {
-                                    _formData['postingSchedule'][platform] = {};
-                                  }
-                                  _formData['postingSchedule'][platform]
-                                          ['preferredTimeRange'] =
-                                      selected ? time : null;
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              })?.toList() ??
-              [],
         ],
       ),
     );
@@ -554,17 +407,17 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       _formKey.currentState?.save();
 
       // Convert posting schedule data to PostingFrequency objects
-      final Map<String, PostingFrequency> postingFrequency = {};
-      if (_formData['postingSchedule'] != null) {
-        (_formData['postingSchedule'] as Map<String, dynamic>)
-            .forEach((platform, data) {
-          postingFrequency[platform] = PostingFrequency(
-            postsPerWeek: data['postsPerWeek'] ?? 0,
-            preferredDays: List<String>.from(data['preferredDays'] ?? []),
-            preferredTimeRange: data['preferredTimeRange'] ?? '',
-          );
-        });
-      }
+      // final Map<String, PostingFrequency> postingFrequency = {};
+      // if (_formData['postingSchedule'] != null) {
+      //   (_formData['postingSchedule'] as Map<String, dynamic>)
+      //       .forEach((platform, data) {
+      //     postingFrequency[platform] = PostingFrequency(
+      //       postsPerWeek: data['postsPerWeek'] ?? 0,
+      //       preferredDays: List<String>.from(data['preferredDays'] ?? []),
+      //       preferredTimeRange: data['preferredTimeRange'] ?? '',
+      //     );
+      //   });
+      // }
 
       final profile = Profile(
         id: '', // Will be set by Firebase
@@ -573,9 +426,9 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         brandPersonality: _formData['brandPersonality'] ?? '',
         targetPlatforms: List<String>.from(_formData['targetPlatforms'] ?? []),
         contentTypes: List<String>.from(_formData['contentTypes'] ?? []),
-        toneOfVoice: _formData['toneOfVoice'] ?? '',
+        // toneOfVoice: _formData['toneOfVoice'] ?? '',
         targetAudience: List<String>.from(_formData['targetAudience'] ?? []),
-        postingFrequency: postingFrequency,
+        // postingFrequency: postingFrequency,
         uniqueSellingProposition: _formData['uniqueSellingProposition'] ?? '',
         contentGoals: List<String>.from(_formData['contentGoals'] ?? []),
       );
