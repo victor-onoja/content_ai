@@ -22,7 +22,10 @@ class ContentSuggestionCard extends StatelessWidget {
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
-        leading: Icon(_getPlatformIcon()),
+        leading: CircleAvatar(
+          backgroundImage: AssetImage(_getPlatformIconAsset()),
+          radius: 10,
+        ),
         title: Text(
           suggestion.platform,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -117,22 +120,20 @@ class ContentSuggestionCard extends StatelessWidget {
     );
   }
 
-  IconData _getPlatformIcon() {
+  String _getPlatformIconAsset() {
     switch (suggestion.platform.toLowerCase()) {
       case 'instagram':
-        return Icons.camera_alt;
+        return 'assets/icons/ig_icon.webp';
       case 'x':
-        return Icons.short_text;
+        return 'assets/icons/x_icon.jpeg';
       case 'linkedin':
-        return Icons.business;
+        return 'assets/icons/linkedin_icon.png';
       case 'facebook':
-        return Icons.facebook;
+        return 'assets/icons/fb_icon.jpeg';
       case 'tiktok':
-        return Icons.music_video;
-      case 'youtube':
-        return Icons.play_circle;
+        return 'assets/icons/tiktok_icon.png';
       default:
-        return Icons.public;
+        return 'assets/images/coco.png';
     }
   }
 

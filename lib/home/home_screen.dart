@@ -19,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
+  CalendarFormat _calendarFormat = CalendarFormat.twoWeeks;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
@@ -118,9 +118,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => Navigator.pushNamed(context, '/edit-profile'),
+          //circle avatar
+          CircleAvatar(
+            radius: 20,
+            backgroundImage: AssetImage(
+              'assets/images/coco.png',
+            ),
           ),
         ],
       ),
@@ -164,6 +167,9 @@ class _HomeScreenState extends State<HomeScreen> {
             shape: BoxShape.circle,
           ),
         ),
+        onFormatChanged: (format) => setState(() {
+          _calendarFormat = format;
+        }),
       ),
     );
   }
