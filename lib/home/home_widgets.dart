@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../profile/profile_bloc.dart';
+import '../profile/profile_event.dart';
+import 'calendar_bloc.dart';
+import 'calendar_event.dart';
 import 'home_screen.dart';
 
-class ContentSuggestionCard extends StatelessWidget {
+class ContentSuggestionCard extends StatefulWidget {
   final ContentSuggestion suggestion;
-  final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final DateTime selectedDate;
 
   const ContentSuggestionCard({
     super.key,
     required this.suggestion,
-    required this.onEdit,
     required this.onDelete,
+    required this.selectedDate,
   });
 
+  @override
+  State<ContentSuggestionCard> createState() => _ContentSuggestionCardState();
+}
+
+class _ContentSuggestionCardState extends State<ContentSuggestionCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -27,14 +37,25 @@ class ContentSuggestionCard extends StatelessWidget {
           radius: 10,
         ),
         title: Text(
-          suggestion.platform,
+          widget.suggestion.platform,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(
-          DateFormat('h:mm a').format(suggestion.scheduledTime),
-          style: TextStyle(color: Colors.grey.shade600),
+        subtitle: GestureDetector(
+          onTap: widget.suggestion.status.toLowerCase() == 'draft'
+              ? () => _showTimePicker(context)
+              : null,
+          child: Text(
+            DateFormat('h:mm a').format(widget.suggestion.scheduledTime),
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              decoration: widget.suggestion.status.toLowerCase() == 'draft'
+                  ? TextDecoration.underline
+                  : null,
+            ),
+          ),
         ),
-        trailing: _buildStatusChip(),
+        trailing: GestureDetector(
+            onTap: () => _cycleStatus(context), child: _buildStatusChip()),
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -50,22 +71,17 @@ class ContentSuggestionCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      suggestion.contentType,
+                      widget.suggestion.contentType,
                       style: TextStyle(color: Colors.grey.shade600),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(suggestion.description),
+                Text(widget.suggestion.description),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'),
-                      onPressed: onEdit,
-                    ),
                     const SizedBox(width: 8),
                     TextButton.icon(
                       icon: const Icon(Icons.delete),
@@ -73,7 +89,7 @@ class ContentSuggestionCard extends StatelessWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red.shade400,
                       ),
-                      onPressed: onDelete,
+                      onPressed: () => _confirmDelete(context),
                     ),
                   ],
                 ),
@@ -85,11 +101,104 @@ class ContentSuggestionCard extends StatelessWidget {
     );
   }
 
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Content'),
+        content: const Text('Are you sure you want to delete this content?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<CalendarBloc>().add(
+                    DeleteContent(widget.suggestion, widget.selectedDate),
+                  );
+
+              context.read<ProfileBloc>().add(LoadProfile());
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red.shade400,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showTimePicker(BuildContext context) async {
+    if (widget.suggestion.status.toLowerCase() != 'draft') return;
+
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(widget.suggestion.scheduledTime),
+    );
+
+    if (time != null) {
+      final newScheduledTime = DateTime(
+        widget.suggestion.scheduledTime.year,
+        widget.suggestion.scheduledTime.month,
+        widget.suggestion.scheduledTime.day,
+        time.hour,
+        time.minute,
+      );
+
+      final newSuggestion = ContentSuggestion(
+        platform: widget.suggestion.platform,
+        contentType: widget.suggestion.contentType,
+        description: widget.suggestion.description,
+        scheduledTime: newScheduledTime,
+        status: widget.suggestion.status,
+        notes: widget.suggestion.notes,
+      );
+
+      final normalizedDate = DateTime(
+        widget.selectedDate.year,
+        widget.selectedDate.month,
+        widget.selectedDate.day,
+      );
+
+      context.read<CalendarBloc>().add(
+            UpdateContent(widget.suggestion, newSuggestion, normalizedDate),
+          );
+
+      context.read<ProfileBloc>().add(LoadProfile());
+    }
+  }
+
+  void _cycleStatus(BuildContext context) {
+    const statusCycle = ['draft', 'scheduled', 'published'];
+    final currentIndex =
+        statusCycle.indexOf(widget.suggestion.status.toLowerCase());
+    final nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
+
+    final newSuggestion = ContentSuggestion(
+      platform: widget.suggestion.platform,
+      contentType: widget.suggestion.contentType,
+      description: widget.suggestion.description,
+      scheduledTime: widget.suggestion.scheduledTime,
+      status: nextStatus,
+      notes: widget.suggestion.notes,
+    );
+
+    context.read<CalendarBloc>().add(
+          UpdateContent(widget.suggestion, newSuggestion, widget.selectedDate),
+        );
+  }
+
   Widget _buildStatusChip() {
     Color backgroundColor;
     Color textColor = Colors.white;
 
-    switch (suggestion.status.toLowerCase()) {
+    switch (widget.suggestion.status.toLowerCase()) {
       case 'draft':
         backgroundColor = Colors.grey.shade400;
         break;
@@ -110,7 +219,7 @@ class ContentSuggestionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        suggestion.status.toUpperCase(),
+        widget.suggestion.status.toUpperCase(),
         style: TextStyle(
           color: textColor,
           fontSize: 12,
@@ -121,7 +230,7 @@ class ContentSuggestionCard extends StatelessWidget {
   }
 
   String _getPlatformIconAsset() {
-    switch (suggestion.platform.toLowerCase()) {
+    switch (widget.suggestion.platform.toLowerCase()) {
       case 'instagram':
         return 'assets/icons/ig_icon.webp';
       case 'x':
@@ -138,7 +247,7 @@ class ContentSuggestionCard extends StatelessWidget {
   }
 
   IconData _getContentTypeIcon() {
-    switch (suggestion.contentType.toLowerCase()) {
+    switch (widget.suggestion.contentType.toLowerCase()) {
       case 'images':
         return Icons.image;
       case 'videos':
@@ -184,7 +293,6 @@ class _AddContentDialogState extends State<AddContentDialog> {
     'LinkedIn',
     'Facebook',
     'TikTok',
-    'YouTube',
   ];
 
   final List<String> _contentTypes = [

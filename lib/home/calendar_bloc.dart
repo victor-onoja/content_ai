@@ -102,32 +102,63 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      // Update local state
-      final updatedSuggestions = Map<DateTime, List<ContentSuggestion>>.from(
-        state.suggestions,
+      final calendarCollection =
+          _firestore.collection('users').doc(user.uid).collection('calendar');
+
+      final normalizedDate = DateTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
       );
 
-      if (updatedSuggestions[event.date] == null) {
-        updatedSuggestions[event.date] = [];
+      final querySnapshot = await calendarCollection.get();
+
+      DocumentReference? docToUpdate;
+      List<ContentSuggestion> updatedSuggestionsList = [];
+
+      for (var doc in querySnapshot.docs) {
+        final date = (doc.data()['date'] as Timestamp).toDate();
+        final normalizedDocDate = DateTime(date.year, date.month, date.day);
+
+        if (normalizedDocDate == normalizedDate) {
+          docToUpdate = doc.reference;
+          updatedSuggestionsList = (doc.data()['suggestions'] as List)
+              .map((s) => ContentSuggestion.fromJson(s))
+              .toList();
+          updatedSuggestionsList.add(event.suggestion);
+          break;
+        }
       }
-      updatedSuggestions[event.date]!.add(event.suggestion);
 
-      // Update Firestore
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('calendar')
-          .doc(event.date.toIso8601String())
-          .set({
-        'date': event.date,
-        'suggestions':
-            updatedSuggestions[event.date]!.map((s) => s.toJson()).toList(),
-      });
+      if (docToUpdate != null) {
+        await docToUpdate.set({
+          'date': Timestamp.fromDate(normalizedDate),
+          'suggestions': updatedSuggestionsList.map((s) => s.toJson()).toList(),
+        });
 
-      emit(state.copyWith(
-        suggestions: updatedSuggestions,
-        status: CalendarStatus.success,
-      ));
+        final updatedSuggestions =
+            Map<DateTime, List<ContentSuggestion>>.from(state.suggestions);
+        updatedSuggestions[normalizedDate] = updatedSuggestionsList;
+
+        emit(state.copyWith(
+          suggestions: updatedSuggestions,
+          status: CalendarStatus.success,
+        ));
+      } else {
+        await calendarCollection.doc(normalizedDate.toIso8601String()).set({
+          'date': Timestamp.fromDate(normalizedDate),
+          'suggestions': [event.suggestion.toJson()],
+        });
+
+        final updatedSuggestions =
+            Map<DateTime, List<ContentSuggestion>>.from(state.suggestions);
+        updatedSuggestions[normalizedDate] = [event.suggestion];
+
+        emit(state.copyWith(
+          suggestions: updatedSuggestions,
+          status: CalendarStatus.success,
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(
         status: CalendarStatus.failure,
@@ -144,33 +175,57 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      // Update local state
-      final updatedSuggestions = Map<DateTime, List<ContentSuggestion>>.from(
-        state.suggestions,
-      );
+      final calendarCollection =
+          _firestore.collection('users').doc(user.uid).collection('calendar');
 
-      final daySuggestions = updatedSuggestions[event.date] ?? [];
-      final index = daySuggestions.indexOf(event.oldSuggestion);
+      final querySnapshot = await calendarCollection.get();
 
-      if (index != -1) {
-        daySuggestions[index] = event.newSuggestion;
+      List<ContentSuggestion> updatedSuggestionsList = [];
+      DocumentReference? docToUpdate;
+
+      for (var doc in querySnapshot.docs) {
+        // Delete any document containing this suggestion
+        final suggestions = (doc.data()['suggestions'] as List);
+        bool foundMatch = false;
+        for (var suggestion in suggestions) {
+          if (suggestion['platform'] == event.oldSuggestion.platform &&
+              suggestion['description'] == event.oldSuggestion.description) {
+            foundMatch = true;
+            docToUpdate = doc.reference;
+            updatedSuggestionsList = suggestions
+                .where((s) =>
+                    s['platform'] != event.oldSuggestion.platform ||
+                    s['description'] != event.oldSuggestion.description)
+                .map((s) => ContentSuggestion.fromJson(s))
+                .toList();
+          }
+        }
+        if (foundMatch) break;
       }
 
-      // Update Firestore
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('calendar')
-          .doc(event.date.toIso8601String())
-          .set({
-        'date': event.date,
-        'suggestions': daySuggestions.map((s) => s.toJson()).toList(),
-      });
+      updatedSuggestionsList.add(event.newSuggestion);
 
-      emit(state.copyWith(
-        suggestions: updatedSuggestions,
-        status: CalendarStatus.success,
-      ));
+      if (docToUpdate != null) {
+        final normalizedDate = DateTime(
+          event.date.year,
+          event.date.month,
+          event.date.day,
+        );
+
+        await docToUpdate.set({
+          'date': Timestamp.fromDate(normalizedDate),
+          'suggestions': updatedSuggestionsList.map((s) => s.toJson()).toList(),
+        });
+
+        final updatedSuggestions =
+            Map<DateTime, List<ContentSuggestion>>.from(state.suggestions);
+        updatedSuggestions[normalizedDate] = updatedSuggestionsList;
+
+        emit(state.copyWith(
+          suggestions: updatedSuggestions,
+          status: CalendarStatus.success,
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(
         status: CalendarStatus.failure,
@@ -187,29 +242,55 @@ class CalendarBloc extends Bloc<CalendarEvent, CalendarState> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      // Update local state
-      final updatedSuggestions = Map<DateTime, List<ContentSuggestion>>.from(
-        state.suggestions,
-      );
+      final calendarCollection =
+          _firestore.collection('users').doc(user.uid).collection('calendar');
 
-      final daySuggestions = updatedSuggestions[event.date] ?? [];
-      daySuggestions.remove(event.suggestion);
+      final querySnapshot = await calendarCollection.get();
 
-      // Update Firestore
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('calendar')
-          .doc(event.date.toIso8601String())
-          .set({
-        'date': event.date,
-        'suggestions': daySuggestions.map((s) => s.toJson()).toList(),
-      });
+      List<ContentSuggestion> updatedSuggestionsList = [];
+      DocumentReference? docToUpdate;
 
-      emit(state.copyWith(
-        suggestions: updatedSuggestions,
-        status: CalendarStatus.success,
-      ));
+      for (var doc in querySnapshot.docs) {
+        // Delete any document containing this suggestion
+        final suggestions = (doc.data()['suggestions'] as List);
+        bool foundMatch = false;
+        for (var suggestion in suggestions) {
+          if (suggestion['platform'] == event.suggestion.platform &&
+              suggestion['description'] == event.suggestion.description) {
+            foundMatch = true;
+            docToUpdate = doc.reference;
+            updatedSuggestionsList = suggestions
+                .where((s) =>
+                    s['platform'] != event.suggestion.platform ||
+                    s['description'] != event.suggestion.description)
+                .map((s) => ContentSuggestion.fromJson(s))
+                .toList();
+          }
+        }
+        if (foundMatch) break;
+      }
+
+      if (docToUpdate != null) {
+        final normalizedDate = DateTime(
+          event.date.year,
+          event.date.month,
+          event.date.day,
+        );
+
+        await docToUpdate.set({
+          'date': Timestamp.fromDate(normalizedDate),
+          'suggestions': updatedSuggestionsList.map((s) => s.toJson()).toList(),
+        });
+
+        final updatedSuggestions =
+            Map<DateTime, List<ContentSuggestion>>.from(state.suggestions);
+        updatedSuggestions[normalizedDate] = updatedSuggestionsList;
+
+        emit(state.copyWith(
+          suggestions: updatedSuggestions,
+          status: CalendarStatus.success,
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(
         status: CalendarStatus.failure,

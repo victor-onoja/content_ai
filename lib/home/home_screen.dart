@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../profile/profile_event.dart';
-import '../profile/profile_state.dart';
 import 'calendar_bloc.dart';
 import 'calendar_event.dart';
 import 'calendar_state.dart';
@@ -44,19 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 backgroundColor: Colors.red.shade400,
               ),
             );
-          },
-        ),
-        BlocListener<ProfileBloc, ProfileState>(
-          listenWhen: (previous, current) =>
-              previous.profile != current.profile && current.profile != null,
-          listener: (context, state) {
-            // Regenerate suggestions when profile changes
-            // context.read<CalendarBloc>().add(
-            //       RegenerateContentSuggestions(
-            //         DateTime.now(),
-            //         DateTime.now().add(const Duration(days: 14)),
-            //       ),
-            //     );
           },
         ),
       ],
@@ -225,27 +211,10 @@ class _HomeScreenState extends State<HomeScreen> {
           final suggestion = suggestions[index];
           return ContentSuggestionCard(
             suggestion: suggestion,
-            onEdit: () => _editSuggestion(context, suggestion),
+            // onEdit: () => _editSuggestion(context, suggestion),
             onDelete: () => _deleteSuggestion(context, suggestion),
+            selectedDate: _selectedDay!,
           );
-        },
-      ),
-    );
-  }
-
-  void _editSuggestion(BuildContext context, ContentSuggestion suggestion) {
-    showDialog(
-      context: context,
-      builder: (context) => AddContentDialog(
-        initialSuggestion: suggestion,
-        onSave: (newSuggestion) {
-          context.read<CalendarBloc>().add(
-                UpdateContent(
-                  suggestion,
-                  newSuggestion,
-                  _selectedDay!,
-                ),
-              );
         },
       ),
     );
@@ -302,6 +271,7 @@ class ContentSuggestion {
   final String description;
   final DateTime scheduledTime;
   final String status; // draft, scheduled, published
+  final String? notes;
 
   ContentSuggestion({
     required this.platform,
@@ -309,14 +279,34 @@ class ContentSuggestion {
     required this.description,
     required this.scheduledTime,
     required this.status,
+    this.notes,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ContentSuggestion &&
+          platform == other.platform &&
+          contentType == other.contentType &&
+          description == other.description &&
+          status == other.status &&
+          notes == other.notes;
+
+  @override
+  int get hashCode =>
+      platform.hashCode ^
+      contentType.hashCode ^
+      description.hashCode ^
+      status.hashCode ^
+      notes.hashCode;
 
   Map<String, dynamic> toJson() => {
         'platform': platform,
         'contentType': contentType,
         'description': description,
-        'scheduledTime': scheduledTime,
+        'scheduledTime': Timestamp.fromDate(scheduledTime),
         'status': status,
+        'notes': notes,
       };
 
   factory ContentSuggestion.fromJson(Map<String, dynamic> json) =>
@@ -326,5 +316,6 @@ class ContentSuggestion {
         description: json['description'],
         scheduledTime: (json['scheduledTime'] as Timestamp).toDate(),
         status: json['status'],
+        notes: json['notes'],
       );
 }
