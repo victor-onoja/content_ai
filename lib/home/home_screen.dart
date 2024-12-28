@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../auth/auth_bloc.dart';
 import '../profile/profile_event.dart';
+import '../splash_screen.dart';
 import 'calendar_bloc.dart';
 import 'calendar_event.dart';
 import 'calendar_state.dart';
@@ -41,6 +43,18 @@ class _HomeScreenState extends State<HomeScreen> {
               SnackBar(
                 content: Text(state.error ?? 'An error occurred'),
                 backgroundColor: Colors.red.shade400,
+              ),
+            );
+          },
+        ),
+        BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) =>
+              previous.status != current.status &&
+              current.status == AuthStatus.unauthenticated,
+          listener: (context, state) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => const SplashScreen(),
               ),
             );
           },
@@ -104,12 +118,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          //circle avatar
-          CircleAvatar(
-            radius: 20,
-            backgroundImage: AssetImage(
-              'assets/images/coco.png',
-            ),
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.logout, color: Colors.orange.shade800),
+                onPressed: () {
+                  context.read<AuthBloc>().add(AuthSignOut());
+                },
+              ),
+              CircleAvatar(
+                radius: 20,
+                backgroundImage: AssetImage(
+                  'assets/images/coco.png',
+                ),
+              ),
+            ],
           ),
         ],
       ),

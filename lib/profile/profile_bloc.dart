@@ -60,7 +60,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
       final doc = await _firestore.collection('users').doc(uid).get();
       if (!doc.exists || !doc.data()!.containsKey('profile')) {
-        throw Exception('Profile not found');
+        emit(state.copyWith(status: ProfileStatus.notFound));
+        return;
       }
 
       final profileData = doc.data()!['profile'] as Map<String, dynamic>;

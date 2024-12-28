@@ -1,6 +1,6 @@
 import 'profile_model.dart';
 
-enum ProfileStatus { initial, loading, success, failure }
+enum ProfileStatus { initial, loading, success, failure, notFound }
 
 class ProfileState {
   final ProfileStatus status;

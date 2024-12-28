@@ -64,10 +64,17 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    context.read<ProfileBloc>().add(LoadProfile());
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocListener<ProfileBloc, ProfileState>(
       listener: (context, state) {
-        if (state.status == ProfileStatus.failure) {
+        if (state.status == ProfileStatus.failure &&
+            _formKey.currentState?.validate() == true) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.error ?? 'Failed to create profile'),
@@ -141,13 +148,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                             'contentTypes',
                             _contentTypes,
                           ),
-                          // _buildTextField(
-                          //   'Tone of Voice',
-                          //   'toneOfVoice',
-                          //   'E.g., Casual, Formal, Humorous',
-                          // ),
                           _buildTargetAudienceField(),
-                          // _buildPostingFrequencySection(),
                           _buildTextField(
                             'Unique Selling Proposition',
                             'uniqueSellingProposition',
@@ -406,19 +407,6 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
       }
       _formKey.currentState?.save();
 
-      // Convert posting schedule data to PostingFrequency objects
-      // final Map<String, PostingFrequency> postingFrequency = {};
-      // if (_formData['postingSchedule'] != null) {
-      //   (_formData['postingSchedule'] as Map<String, dynamic>)
-      //       .forEach((platform, data) {
-      //     postingFrequency[platform] = PostingFrequency(
-      //       postsPerWeek: data['postsPerWeek'] ?? 0,
-      //       preferredDays: List<String>.from(data['preferredDays'] ?? []),
-      //       preferredTimeRange: data['preferredTimeRange'] ?? '',
-      //     );
-      //   });
-      // }
-
       final profile = Profile(
         id: '', // Will be set by Firebase
         name: _formData['name'] ?? '',
@@ -426,9 +414,7 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
         brandPersonality: _formData['brandPersonality'] ?? '',
         targetPlatforms: List<String>.from(_formData['targetPlatforms'] ?? []),
         contentTypes: List<String>.from(_formData['contentTypes'] ?? []),
-        // toneOfVoice: _formData['toneOfVoice'] ?? '',
         targetAudience: List<String>.from(_formData['targetAudience'] ?? []),
-        // postingFrequency: postingFrequency,
         uniqueSellingProposition: _formData['uniqueSellingProposition'] ?? '',
         contentGoals: List<String>.from(_formData['contentGoals'] ?? []),
       );

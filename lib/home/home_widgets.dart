@@ -79,6 +79,55 @@ class _ContentSuggestionCardState extends State<ContentSuggestionCard> {
                 const SizedBox(height: 12),
                 Text(widget.suggestion.description),
                 const SizedBox(height: 16),
+                InkWell(
+                  onTap: () => _showNotesDialog(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Notes',
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Icon(
+                              Icons.edit,
+                              size: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.suggestion.notes?.isNotEmpty == true
+                              ? widget.suggestion.notes!
+                              : 'Tap to add notes or draft your post...',
+                          style: TextStyle(
+                            color: widget.suggestion.notes?.isNotEmpty == true
+                                ? Colors.black87
+                                : Colors.grey.shade500,
+                            fontStyle:
+                                widget.suggestion.notes?.isNotEmpty == true
+                                    ? FontStyle.normal
+                                    : FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -263,6 +312,144 @@ class _ContentSuggestionCardState extends State<ContentSuggestionCard> {
       default:
         return Icons.post_add;
     }
+  }
+
+  Future<void> _showNotesDialog(BuildContext context) async {
+    final TextEditingController notesController = TextEditingController(
+      text: widget.suggestion.notes ?? '',
+    );
+
+    return showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Important for keyboard handling
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(20),
+          ),
+        ),
+        padding: EdgeInsets.only(
+          top: 16,
+          left: 24,
+          right: 24,
+          // Add padding for keyboard
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Bottom Sheet Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Content Notes',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.orange.shade800,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                // Platform icon
+                CircleAvatar(
+                  backgroundImage: AssetImage(_getPlatformIconAsset()),
+                  radius: 12,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Content preview
+            Text(
+              widget.suggestion.description,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: TextField(
+                controller: notesController,
+                maxLines: null, // Allow unlimited lines
+                expands: true, // Take up all available space
+                textAlignVertical: TextAlignVertical.top,
+                decoration: InputDecoration(
+                  hintText: 'Add notes or start drafting your post...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    final newSuggestion = ContentSuggestion(
+                      platform: widget.suggestion.platform,
+                      contentType: widget.suggestion.contentType,
+                      description: widget.suggestion.description,
+                      scheduledTime: widget.suggestion.scheduledTime,
+                      status: widget.suggestion.status,
+                      notes: notesController.text,
+                    );
+
+                    context.read<CalendarBloc>().add(
+                          UpdateContent(
+                            widget.suggestion,
+                            newSuggestion,
+                            widget.selectedDate,
+                          ),
+                        );
+
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade400,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

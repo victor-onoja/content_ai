@@ -6,9 +6,7 @@ class Profile {
   final List<String> targetPlatforms;
   final List<String> contentGoals;
   final List<String> contentTypes;
-  // final String toneOfVoice;
   final List<String> targetAudience;
-  // final Map<String, PostingFrequency> postingFrequency;
   final String uniqueSellingProposition;
 
   Profile({
@@ -19,9 +17,7 @@ class Profile {
     required this.targetPlatforms,
     required this.contentGoals,
     required this.contentTypes,
-    // required this.toneOfVoice,
     required this.targetAudience,
-    // required this.postingFrequency,
     required this.uniqueSellingProposition,
   });
 
@@ -34,9 +30,7 @@ class Profile {
     List<String>? contentGoals,
     List<String>? contentTypes,
     Map<String, String>? brandValues,
-    // String? toneOfVoice,
     List<String>? targetAudience,
-    // Map<String, PostingFrequency>? postingFrequency,
     String? uniqueSellingProposition,
   }) {
     return Profile(
@@ -47,9 +41,7 @@ class Profile {
       targetPlatforms: targetPlatforms ?? this.targetPlatforms,
       contentGoals: contentGoals ?? this.contentGoals,
       contentTypes: contentTypes ?? this.contentTypes,
-      // toneOfVoice: toneOfVoice ?? this.toneOfVoice,
       targetAudience: targetAudience ?? this.targetAudience,
-      // postingFrequency: postingFrequency ?? this.postingFrequency,
       uniqueSellingProposition:
           uniqueSellingProposition ?? this.uniqueSellingProposition,
     );
@@ -63,22 +55,11 @@ class Profile {
         'targetPlatforms': targetPlatforms,
         'contentGoals': contentGoals,
         'contentTypes': contentTypes,
-        // 'toneOfVoice': toneOfVoice,
         'targetAudience': targetAudience,
-        // 'postingFrequency':
-        //     postingFrequency.map((key, value) => MapEntry(key, value.toJson())),
         'uniqueSellingProposition': uniqueSellingProposition,
       };
 
   factory Profile.fromJson(Map<String, dynamic> json) {
-    // Map<String, PostingFrequency> postingFrequencyMap = {};
-    // if (json['postingFrequency'] != null) {
-    //   (json['postingFrequency'] as Map<String, dynamic>).forEach((key, value) {
-    //     postingFrequencyMap[key] =
-    //         PostingFrequency.fromJson(value as Map<String, dynamic>);
-    //   });
-    // }
-
     return Profile(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
@@ -87,9 +68,7 @@ class Profile {
       targetPlatforms: List<String>.from(json['targetPlatforms'] ?? []),
       contentGoals: List<String>.from(json['contentGoals'] ?? []),
       contentTypes: List<String>.from(json['contentTypes'] ?? []),
-      // toneOfVoice: json['toneOfVoice'] as String? ?? '',
       targetAudience: List<String>.from(json['targetAudience'] ?? []),
-      // postingFrequency: postingFrequencyMap,
       uniqueSellingProposition:
           json['uniqueSellingProposition'] as String? ?? '',
     );

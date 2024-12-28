@@ -73,9 +73,16 @@ class AuthScreen extends StatelessWidget {
                       context,
                       onPressed: isLoading
                           ? null
-                          : () => context
-                              .read<AuthBloc>()
-                              .add(AuthSignInWithApple()),
+                          : () => ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'Apple Sign In is not yet implemented'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              ),
+                      // context
+                      //     .read<AuthBloc>()
+                      //     .add(AuthSignInWithApple()),
                       icon: 'assets/icons/apple_logo.jpeg',
                       label: 'Continue with Apple',
                     ),
@@ -89,13 +96,6 @@ class AuthScreen extends StatelessWidget {
                       icon: 'assets/icons/guest_icon.png',
                       label: 'Continue as Guest',
                     ),
-
-                    // Loading indicator
-                    // if (state.status == AuthStatus.unknown)
-                    //   const Padding(
-                    //     padding: EdgeInsets.only(top: 24),
-                    //     child: Center(child: CircularProgressIndicator()),
-                    //   ),
                   ],
                 ),
                 // Loading overlay
