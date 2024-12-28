@@ -20,10 +20,12 @@ Content AI is a Flutter application designed to help users create and manage the
 
 1. Clone the repository:
 
-   ```sh
+   ````sh
    git clone https://github.com/your-username/content_ai.git
    cd content_ai
-   ```
+   ```sh
+
+   ````
 
 2. Install dependencies:
 
@@ -37,6 +39,7 @@ Content AI is a Flutter application designed to help users create and manage the
    - Place the `google-services.json` (for Android) and `GoogleService-Info.plist` (for iOS) in the respective directories.
 
 4. Run the app:
+
    ```sh
    flutter run
    ```
