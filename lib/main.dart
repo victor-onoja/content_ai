@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 import 'auth/auth_bloc.dart';
+import 'config.dart'; // Import the config file
 import 'firebase_options.dart';
 
 void main() async {
@@ -21,7 +22,7 @@ class MainApp extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GenerativeModel _generativeModel = GenerativeModel(
       model: 'gemini-1.5-flash-latest',
-      apiKey: "AIzaSyD_oL-0jXjJ3qgQsJ7lzah-fs6p5j2PMtE");
+      apiKey: Config.generativeModelApiKey); // Use the API key from config
 
   MainApp({super.key});
 
