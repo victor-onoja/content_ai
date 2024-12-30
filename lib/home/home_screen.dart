@@ -147,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(15),
       ),
       child: TableCalendar(
-        firstDay: DateTime.now(),
+        firstDay: DateTime.now().subtract(const Duration(days: 90)),
         lastDay: DateTime.now().add(const Duration(days: 365)),
         focusedDay: _focusedDay,
         calendarFormat: _calendarFormat,
