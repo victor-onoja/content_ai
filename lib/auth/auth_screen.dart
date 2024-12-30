@@ -38,7 +38,7 @@ class AuthScreen extends StatelessWidget {
                   children: [
                     // App Logo
                     Image.asset(
-                      'assets/images/coco.png',
+                      'assets/images/coco-min.png',
                       height: 150,
                     ),
                     const SizedBox(height: 32),

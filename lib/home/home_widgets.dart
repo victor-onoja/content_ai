@@ -291,7 +291,7 @@ class _ContentSuggestionCardState extends State<ContentSuggestionCard> {
       case 'tiktok':
         return 'assets/icons/tiktok_icon.png';
       default:
-        return 'assets/images/coco.png';
+        return 'assets/images/coco-min.png';
     }
   }
 
